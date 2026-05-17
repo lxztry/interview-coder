@@ -427,9 +427,12 @@ def api_export_paper(paper_id):
 
 if __name__ == '__main__':
     print("=" * 50)
+    import multiprocessing
+    port = int(os.environ.get('PORT', 5123))
+    debug = os.environ.get('FLASK_ENV') != 'production'
     print("AI时代研发招聘出题系统")
     print("=" * 50)
     print(f"数据库: {DB_PATH}")
     print(f"题库目录: {QUESTION_DIR}")
-    print("启动中... http://127.0.0.1:5123")
-    app.run(host='0.0.0.0', port=5123, debug=True)
+    print(f"启动中... http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=debug)
