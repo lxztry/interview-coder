@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI助手 - 面试出题系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f0f1a;color:#e0e0e0}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.nav{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.nav a{padding:10px 20px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;color:#888;text-decoration:none}
+.nav a:hover,.nav a.active{color:#4a9eff;border-color:#4a9eff}
+h1{font-size:1.8em;color:#fff;margin-bottom:30px}
+.panel{background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #2a2a4a;border-radius:16px;padding:30px;margin-bottom:20px}
+.panel-header{display:flex;align-items:center;gap:15px;margin-bottom:25px}
+.panel-icon{font-size:2em}
+.panel-title{color:#fff;font-size:1.3em}
+.panel-subtitle{color:#888;font-size:0.9em}
+.section{background:#0f0f1a;border-radius:12px;padding:20px;margin-bottom:20px}
+.section-title{color:#888;font-size:0.9em;margin-bottom:15px;text-transform:uppercase;letter-spacing:1px}
+select,input,textarea{width:100%;padding:12px 15px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;color:#e0e0e0;font-size:0.95em}
+select{cursor:pointer}
+textarea{min-height:80px;resize:vertical}
+.generate-btn{width:100%;padding:15px;background:linear-gradient(135deg,#4a9eff,#2a7eef);border:none;border-radius:10px;color:#fff;font-size:1.1em;font-weight:600;cursor:pointer;margin-top:20px}
+.generate-btn:disabled{opacity:0.5}
+.output-section{margin-top:30px}
+.output-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.output-title{color:#fff;font-size:1.1em}
+.output-content{background:#0f0f1a;border-radius:12px;padding:20px;white-space:pre-wrap;font-size:0.95em;line-height:1.7;max-height:500px;overflow-y:auto;color:#ccc}
+.output-content.error{color:#ff4a4a}
+.loading{text-align:center;padding:40px;color:#888}
+.btn-sm{padding:8px 15px;background:#2a2a4a;border:none;border-radius:6px;color:#888;cursor:pointer;font-size:0.85em}
+.btn-sm:hover{color:#fff;background:#3a3a5a}
+.btn-primary{background:#4a9eff;color:#fff}
+.btn-success{background:#4aff4a;color:#000}
+.template-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.template-tab{padding:10px 18px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;cursor:pointer;color:#888;font-size:0.9em;transition:all 0.2s}
+.template-tab:hover{border-color:#4a9eff;color:#4a9eff}
+.template-tab.active{background:#1a2a4a;border-color:#4a9eff;color:#4a9eff}
+.template-content{background:#0f0f1a;border-radius:10px;padding:15px;border:1px solid #2a2a4a}
+.template-name{color:#fff;font-weight:600;margin-bottom:8px}
+.template-desc{color:#888;font-size:0.85em;margin-bottom:12px}
+.template-prompt{background:#151525;border-radius:8px;padding:15px;font-family:monospace;font-size:0.88em;line-height:1.6;color:#aaa;white-space:pre-wrap;max-height:250px;overflow-y:auto}
+.template-actions{display:flex;gap:10px;margin-top:12px}
+.btn-use{padding:5px 12px;background:#4a9eff;border:none;border-radius:5px;color:#fff;cursor:pointer;font-size:0.85em}
+.btn-copy{padding:5px 12px;background:#2a2a4a;border:none;border-radius:5px;color:#888;cursor:pointer;font-size:0.85em}
+.btn-del{padding:5px 10px;background:#ff4a4a;border:none;border-radius:5px;color:#fff;cursor:pointer;font-size:0.85em}
+.custom-dim-list{display:flex;flex-direction:column;gap:10px}
+.custom-dim-item{display:flex;gap:10px;align-items:center;padding:10px;background:#1a1a2e;border-radius:8px}
+.custom-dim-item input{flex:1}
+.add-dim-btn{width:100%;padding:10px;background:transparent;border:2px dashed #2a2a4a;border-radius:8px;color:#888;cursor:pointer;font-size:0.9em}
+.add-dim-btn:hover{border-color:#4a9eff;color:#4a9eff}
+.builder-preview{background:#151525;border-radius:8px;padding:15px;font-family:monospace;font-size:0.9em;line-height:1.6;color:#aaa;white-space:pre-wrap;max-height:320px;overflow-y:auto}
+.criteria-tags-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.criteria-tag{display:inline-flex;padding:5px 12px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:20px;font-size:0.85em;color:#888;cursor:pointer;transition:all 0.2s}
+.criteria-tag:hover{border-color:#4a9eff;color:#4a9eff}
+.criteria-tag.selected{background:#1a2a4a;border-color:#4a9eff;color:#4a9eff}
+.providers{display:flex;gap:15px;flex-wrap:wrap}
+.provider-btn{padding:10px 18px;background:#1a1a2e;border:2px solid #2a2a4a;border-radius:8px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px;color:#888}
+.provider-btn:hover{border-color:#4a9eff;color:#4a9eff}
+.provider-btn.active{border-color:#4a9eff;background:#1a2a4a;color:#4a9eff}
+.level-btns{display:flex;gap:10px}
+.level-btn{flex:1;padding:12px;background:#1a1a2e;border:2px solid #2a2a4a;border-radius:8px;cursor:pointer;text-align:center;color:#888;transition:all 0.2s}
+.level-btn:hover{border-color:#4a9eff;color:#4a9eff}
+.level-btn.active{border-color:#4a9eff;background:#1a2a4a;color:#4a9eff}
+.level-btn .level-name{font-size:1em;font-weight:600}
+.level-btn .level-desc{font-size:0.78em;margin-top:3px;opacity:0.7}
+.divider{border-top:1px dashed #2a2a4a;margin:25px 0}
+.config-row{display:flex;gap:15px;flex-wrap:wrap}
+.config-row>div{flex:1;min-width:200px}
+</style>
+</head>
+<body>
+<div class="container">
+<nav class="nav">
+<a href="/">首页</a>
+<a href="/questions">题库管理</a>
+<a href="/papers">试卷管理</a>
+<a href="/candidates">候选人</a>
+<a href="/ai-assist" class="active">AI助手</a>
+</nav>
+<h1>AI智能出题助手</h1>
+
+<div class="panel">
+<div class="panel-header">
+<div class="panel-icon">T1</div>
+<div>
+<div class="panel-title">预设提示词模板</div>
+<div class="panel-subtitle">资深AI Coding专家设计的模板，直接使用快速生成题目</div>
+</div>
+</div>
+<div class="template-tabs">
+<div class="template-tab active" onclick="switchPresetTemplate('ai_tools')">[AI] AI工具使用</div>
+<div class="template-tab" onclick="switchPresetTemplate('code_rewrite')">[CODE] 代码理解改写</div>
+<div class="template-tab" onclick="switchPresetTemplate('business_model')">[MODEL] 业务建模</div>
+<div class="template-tab" onclick="switchPresetTemplate('debug')">[DEBUG] 调试排查</div>
+<div class="template-tab" onclick="switchPresetTemplate('architecture')">[ARCH] 综合架构</div>
+</div>
+<div id="preset-template-display" style="margin-top:15px;"></div>
+</div>
+
+<div class="panel">
+<div class="panel-header">
+<div class="panel-icon">T2</div>
+<div>
+<div class="panel-title">自定义提示词生成器</div>
+<div class="panel-subtitle">添加自定义维度，基于考察要点自动生成专属提示词</div>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">自定义维度管理</div>
+<div id="custom-dim-list" class="custom-dim-list"></div>
+<button class="add-dim-btn" onclick="addCustomDimension()">+ 添加自定义维度</button>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+<div class="section-title">生成专属提示词</div>
+<div class="config-row">
+<div>
+<label style="color:#888;font-size:0.85em;display:block;margin-bottom:5px;">考察维度</label>
+<select id="prompt-dimension" onchange="onDimensionChange()">
+<option value="">-- 选择维度 --</option>
+<optgroup label="预设维度">
+<option value="ai_tools">AI工具使用能力</option>
+<option value="code_rewrite">代码理解与改写</option>
+<option value="business_model">业务建模能力</option>
+<option value="debug">调试与排查能力</option>
+<option value="system_design">系统设计能力</option>
+<option value="data_structures">算法与数据结构</option>
+</optgroup>
+<optgroup label="自定义维度" id="custom-dim-options"></optgroup>
+</select>
+</div>
+<div>
+<label style="color:#888;font-size:0.85em;display:block;margin-bottom:5px;">难度级别</label>
+<div class="level-btns">
+<div class="level-btn" onclick="selectLevel('L1', this)"><div class="level-name">L1</div><div class="level-desc">30分钟</div></div>
+<div class="level-btn active" onclick="selectLevel('L2', this)"><div class="level-name">L2</div><div class="level-desc">1-2小时</div></div>
+<div class="level-btn" onclick="selectLevel('L3', this)"><div class="level-name">L3</div><div class="level-desc">2-4小时</div></div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:15px;">
+<label style="color:#888;font-size:0.85em;display:block;margin-bottom:5px;">自定义维度名称</label>
+<input type="text" id="custom-dim-name" placeholder="选择自定义维度后填入名称" style="display:none;" oninput="updatePromptPreview()">
+</div>
+
+<div style="margin-top:15px;">
+<label style="color:#888;font-size:0.85em;display:block;margin-bottom:5px;">考察要点（点击选择或按回车添加）</label>
+<div id="criteria-tags" class="criteria-tags-wrap"></div>
+<input type="text" id="custom-criteria-input" placeholder="输入自定义考察要点，按回车添加" style="margin-top:10px;" onkeypress="addCustomCriteria(event)">
+</div>
+
+<div style="margin-top:15px;">
+<label style="color:#888;font-size:0.85em;display:block;margin-bottom:5px;">补充说明</label>
+<textarea id="extra-context" style="min-height:60px;" placeholder="业务背景/技术栈偏好/特殊要求..." oninput="updatePromptPreview()"></textarea>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">生成的提示词预览</div>
+<div class="builder-preview" id="prompt-preview">// 选择维度、难度和考察要点，自动生成提示词...</div>
+<div style="display:flex;gap:10px;margin-top:12px;">
+<button class="btn-sm" onclick="copyPrompt()">复制提示词</button>
+<button class="btn-sm btn-primary" onclick="usePrompt()">使用此提示词生成</button>
+</div>
+</div>
+</div>
+
+<div class="panel">
+<div class="panel-header">
+<div class="panel-icon">T3</div>
+<div>
+<div class="panel-title">AI生成题目</div>
+<div class="panel-subtitle">使用提示词生成面试题目</div>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">选择AI服务</div>
+<div class="providers">
+<div class="provider-btn active" onclick="selectProvider('deepseek')">DeepSeek</div>
+<div class="provider-btn" onclick="selectProvider('gemini')">Gemini</div>
+<div class="provider-btn" onclick="selectProvider('websearch')">联网搜索</div>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">最终提示词</div>
+<textarea id="final-prompt" style="min-height:160px;font-family:monospace;font-size:0.9em;" placeholder="从上方复制的提示词会显示在这里..."></textarea>
+</div>
+
+<button class="generate-btn" id="generate-btn" onclick="generateQuestion()">生成题目</button>
+
+<div class="output-section" id="output-section" style="display:none;">
+<div class="output-header">
+<span class="output-title">AI生成的题目</span>
+<div style="display:flex;gap:10px;">
+<button class="btn-sm" onclick="copyOutput()">复制</button>
+<button class="btn-sm btn-success" onclick="saveToQuestionBank()">保存到题库</button>
+</div>
+</div>
+<div class="output-content" id="output-content"></div>
+</div>
+</div>
+</div>
+
+<script>
+var selectedProvider="deepseek";
+var selectedLevel="L2";
+var selectedPreset="ai_tools";
+var generatedContent="";
+var customDimensions=[];
+var selectedCriteria=[];
+
+var presetTemplates={
+ai_tools:{name:"[AI]AI工具使用能力",desc:"适合校招/初级社招",expert:"AI Coding专家",prompt:"你是一个AI Coding专家，请为研发招聘生成一道考察AI工具使用能力的面试题。\n\n要求：\n- 场景必须是真实工作场景，禁止纯概念题\n- 候选人需要用AI工具（Copilot/Claude/Gemini等）辅助完成任务\n- 任务要包含探索-执行-验证完整流程\n- 评分标准要区分会用AI vs 用好AI\n\n输出格式：\n## 题目标题\n## 任务背景\n## 具体要求（3-5条）\n## 面试官提示词\n## 评分标准（优秀/良好/及格/不及格）"},
+code_rewrite:{name:"[CODE]代码理解与改写",desc:"适合中级社招（L5）",expert:"代码架构专家",prompt:"你是一个代码面试专家，请生成一道考察代码理解与改写能力的面试题。\n\n设计原则：\n- 给你一段看起来能跑但隐藏问题的真实代码（300-500行）\n- 题目分两阶段：理解现有逻辑 + 在约束下改写\n- 约束条件必须具体：如不能改接口、必须向后兼容\n\n输出结构：\n## 题目场景\n## 第一阶段任务：理解并回答问题\n## 第二阶段任务：在XX约束下完成改写\n## 评分维度：理解准确度 / 改写质量 / 边界情况处理"},
+business_model:{name:"[MODEL]业务建模能力",desc:"适合中高级社招",expert:"系统架构专家",prompt:"你是一个系统架构专家，请生成一道考察业务建模能力的面试题。\n\n设计原则：\n- 必须来自真实业务场景，避免教科书式题目\n- 场景要包含看起来简单但有隐藏复杂性的元素\n- 需要候选人做权衡取舍，不能只画ER图\n\n输出结构：\n## 业务场景描述\n## 角色说明\n## 核心约束\n## 交付物要求\n## 评分维度：完整性 / 可扩展性 / 工程可行性"},
+debug:{name:"[DEBUG]调试与排查能力",desc:"适合中高级社招",expert:"SRE稳定性专家",prompt:"你是一个SRE专家，请生成一道考察调试与排查能力的面试题。\n\n设计原则：\n- 给候选人一个看起来正常但实际有问题的系统trace\n- 问题必须分布在不同层级：应用层/中间件层/数据库层/网络层\n- 要包含一些坑，需要跨链路追踪才能找到根因\n\n输出结构：\n## 系统环境\n## 问题现象\n## 已知信息\n## 候选人需要：定位根因 -> 提出修复方案 -> 设计预防机制\n\n## 评分标准\n- 优秀：10分钟内找到根因，最优修复方案，有预防机制\n- 良好：能找到根因，方案可行\n- 及格：方向对但定位慢，方案有漏洞\n- 不及格：方向错误，或直接乱改"},
+architecture:{name:"[ARCH]综合架构设计",desc:"适合架构师/专家岗（L6+）",expert:"CTO/架构师",prompt:"你是一个CTO/架构师，请生成一道考察综合架构能力的高级面试题。\n\n设计原则：\n- 给一个具体的业务场景（如日活千万的直播平台）\n- 候选人需要设计完整方案：架构图 + 数据模型 + 技术选型 + 风险评估\n- 必须包含tradeoff说明\n- 要有扩展性考察\n\n输出结构：\n## 业务背景\n## 当前痛点（3个）\n## 交付物要求：架构图 + 数据模型 + 技术选型 + 扩容方案 + 监控告警\n\n## 评分标准\n- 优秀：方案完整合理，取舍有道，有长期演进思维\n- 良好：主要方案OK，细节有疏漏\n- 及格：基本设计，缺少全局视角\n- 不及格：方案有明显漏洞"}
+};
+
+var dimensionCriteria={
+ai_tools:["AI辅助代码重构","Copilot使用技巧","Claude代码理解","Prompt工程技巧","AI辅助调试","代码审查提效"],
+code_rewrite:["遗留代码理解","设计模式应用","SOLID原则","性能优化","代码可读性","边界情况处理"],
+business_model:["数据模型设计","API设计","微服务拆分","DDD战术设计","技术选型权衡","扩展性考虑"],
+debug:["日志分析","链路追踪","性能瓶颈定位","并发问题排查","内存泄漏定位","根因分析"],
+system_design:["高并发设计","分布式系统","数据一致性","缓存策略","消息队列","降级熔断"],
+data_structures:["数组链表","树和图","动态规划","排序算法","哈希表应用","递归与回溯"]
+};
+
+var dimensionNames={
+ai_tools:"AI工具使用能力",code_rewrite:"代码理解与改写",business_model:"业务建模能力",debug:"调试与排查能力",system_design:"系统设计能力",data_structures:"算法与数据结构"};
+var expertMap={
+ai_tools:"AI Coding专家",code_rewrite:"代码架构专家",business_model:"系统架构专家",debug:"SRE稳定性专家",system_design:"分布式系统架构师",data_structures:"算法工程师"};
+var levelTimeMap={L1:"30分钟内",L2:"1-2小时",L3:"2-4小时"};
+var levelFocusMap={L1:"基础概念和简单应用",L2:"系统设计和工程思维",L3:"综合架构能力和深度洞察"};
+
+function init(){
+var saved=localStorage.getItem("customDimensions");
+if(saved)customDimensions=JSON.parse(saved);
+renderPresetTemplate();
+renderCustomDimensions();
+renderCriteriaTags();
+updatePromptPreview();
+}
+
+function escapeHtml(text){
+return String(text).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function switchPresetTemplate(id){
+selectedPreset=id;
+var tabs=document.querySelectorAll(".template-tab");
+for(var i=0;i<tabs.length;i++)tabs[i].classList.remove("active");
+event.target.classList.add("active");
+renderPresetTemplate();
+}
+
+function renderPresetTemplate(){
+var tmpl=presetTemplates[selectedPreset];
+document.getElementById("preset-template-display").innerHTML="<div class=\"template-content\"><div class=\"template-name\">"+tmpl.name+"</div><div class=\"template-desc\">"+tmpl.desc+"</div><div class=\"template-prompt\">"+escapeHtml(tmpl.prompt)+"</div><div class=\"template-actions\"><button class=\"btn-use\" onclick=\"usePresetTemplate()\">使用此模板</button><button class=\"btn-copy\" onclick=\"copyPresetTemplate()\">复制</button></div></div>";
+}
+
+function usePresetTemplate(){
+document.getElementById("final-prompt").value=presetTemplates[selectedPreset].prompt;
+document.getElementById("final-prompt").scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function copyPresetTemplate(){
+navigator.clipboard.writeText(presetTemplates[selectedPreset].prompt).then(function(){alert("已复制到剪贴板！");});
+}
+
+function addCustomDimension(){
+var name=prompt("请输入新的考察维度名称：");
+if(name&&name.trim()){
+var id="custom_"+Date.now();
+customDimensions.push({id:id,name:name.trim()});
+localStorage.setItem("customDimensions",JSON.stringify(customDimensions));
+renderCustomDimensions();
+}
+}
+
+function useCustomDimension(id,name){
+document.getElementById("prompt-dimension").value=id;
+document.getElementById("custom-dim-name").value=name;
+document.getElementById("custom-dim-name").style.display="block";
+onDimensionChange();
+}
+
+function deleteCustomDimension(id){
+customDimensions=customDimensions.filter(function(d){return d.id!==id;});
+localStorage.setItem("customDimensions",JSON.stringify(customDimensions));
+renderCustomDimensions();
+}
+
+function renderCustomDimensions(){
+var list=document.getElementById("custom-dim-list");
+var options=document.getElementById("custom-dim-options");
+if(!customDimensions.length){
+list.innerHTML="<p style=\"color:#666;text-align:center;padding:12px;\">暂无自定义维度，点击下方添加</p>";
+}else{
+var html="";
+for(var i=0;i<customDimensions.length;i++){
+var d=customDimensions[i];
+html+="<div class=\"custom-dim-item\"><input type=\"text\" value=\""+d.name+"\" readonly><button class=\"btn-use\" onclick=\"useCustomDimension(\'"+d.id+"\',\'"+d.name+"\')\">使用</button><button class=\"btn-del\" onclick=\"deleteCustomDimension(\'"+d.id+"\')\">删除</button></div>";
+}
+list.innerHTML=html;
+}
+var optsHtml="";
+for(var j=0;j<customDimensions.length;j++){
+optsHtml+="<option value=\""+customDimensions[j].id+"\">"+customDimensions[j].name+"</option>";
+}
+options.innerHTML=optsHtml;
+}
+
+function selectLevel(level,el){
+selectedLevel=level;
+var btns=document.querySelectorAll(".level-btn");
+for(var i=0;i<btns.length;i++)btns[i].classList.remove("active");
+el.classList.add("active");
+updatePromptPreview();
+}
+
+function onDimensionChange(){
+var dim=document.getElementById("prompt-dimension").value;
+document.getElementById("custom-dim-name").style.display=dim.indexOf("custom_")===0?"block":"none";
+renderCriteriaTags();
+updatePromptPreview();
+}
+
+function renderCriteriaTags(){
+var dim=document.getElementById("prompt-dimension").value;
+var container=document.getElementById("criteria-tags");
+if(dimensionCriteria[dim]){
+var html="";
+for(var i=0;i<dimensionCriteria[dim].length;i++){
+var c=dimensionCriteria[dim][i];
+var sel=selectedCriteria.indexOf(c)>-1?" selected":"";
+html+="<span class=\"criteria-tag"+sel+"\" onclick=\"toggleCriteria(\'"+c.replace(/'/g,"\\'")+"\',this)\">"+c+"</span>";
+}
+container.innerHTML=html;
+}else if(dim.indexOf("custom_")===0){
+container.innerHTML="<span style=\"color:#888;font-size:0.85em;\">请在上方输入维度名称，然后输入具体的考察要点</span>";
+}else{
+container.innerHTML="<span style=\"color:#666;font-size:0.85em;\">请先选择考察维度</span>";
+}
+}
+
+function toggleCriteria(criteria,el){
+var idx=selectedCriteria.indexOf(criteria);
+if(idx>-1){selectedCriteria.splice(idx,1);el.classList.remove("selected");}
+else{selectedCriteria.push(criteria);el.classList.add("selected");}
+updatePromptPreview();
+}
+
+function addCustomCriteria(e){
+if(e.key==="Enter"){
+var val=e.target.value.trim();
+if(val&&selectedCriteria.indexOf(val)===-1){
+selectedCriteria.push(val);
+var tag=document.createElement("span");
+tag.className="criteria-tag selected";
+tag.textContent=val;
+var criteria=val;
+tag.onclick=function(){toggleCriteria(criteria,this);};
+document.getElementById("criteria-tags").appendChild(tag);
+updatePromptPreview();
+}
+e.target.value="";
+}
+}
+
+function updatePromptPreview(){
+var dim=document.getElementById("prompt-dimension").value;
+var customDimName=document.getElementById("custom-dim-name").value;
+var extraContext=document.getElementById("extra-context").value;
+var dimName,expert;
+if(dim.indexOf("custom_")===0){
+dimName=customDimName||"自定义能力";
+expert="技术面试专家";
+}else{
+dimName=dimensionNames[dim]||"综合能力";
+expert=expertMap[dim]||"技术面试官";
+}
+var criteriaStr=selectedCriteria.length>0?"\n- "+selectedCriteria.join("\n- "):"\n- 核心知识点理解\n- 实际问题解决能力\n- 代码质量意识";
+var prompt="你是一个"+expert+"，请为AI时代的研发招聘生成一道面试题。\n\n## 基本信息\n- 考察维度："+dimName+"\n- 难度级别："+selectedLevel+"（"+levelTimeMap[selectedLevel]+"完成）\n- 重点考察："+levelFocusMap[selectedLevel]+"\n\n## 考察要点\n"+criteriaStr+"\n\n## 场景要求\n- 场景必须是真实工作场景，禁止纯概念题\n- 需要候选人展示"+dimName+"的实战能力\n"+(extraContext?"- 补充要求："+extraContext:"")+"\n\n## 输出格式\n## 题目标题\n[简洁描述，控制在20字以内]\n\n## 任务背景\n[描述一个让候选人感到真实有挑战的工作场景，100字左右]\n\n## 具体要求\n[3-5条验收标准]\n\n## 面试官提示词\n[分3个level的渐进式提示]\n\n## 评分标准\n- **优秀 (80-100分)**：[具体标准]\n- **良好 (60-79分)**：[具体标准]\n- **及格 (40-59分)**：[具体标准]\n- **不及格 (0-39分)**：[具体标准]\n\n## 预计完成时间\n"+levelTimeMap[selectedLevel]+"\n\n---\n注意：题目要能区分出候选人的实际能力水平，避免过于简单或过于偏门。";
+document.getElementById("prompt-preview").textContent=prompt;
+}
+
+function copyPrompt(){
+navigator.clipboard.writeText(document.getElementById("prompt-preview").textContent).then(function(){alert("已复制到剪贴板！");});
+}
+
+function usePrompt(){
+document.getElementById("final-prompt").value=document.getElementById("prompt-preview").textContent;
+document.getElementById("final-prompt").scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function selectProvider(provider){
+selectedProvider=provider;
+var btns=document.querySelectorAll(".provider-btn");
+for(var i=0;i<btns.length;i++)btns[i].classList.remove("active");
+event.target.closest(".provider-btn").classList.add("active");
+}
+
+function generateQuestion(){
+var btn=document.getElementById("generate-btn");
+var outputSection=document.getElementById("output-section");
+var outputContent=document.getElementById("output-content");
+var finalPrompt=document.getElementById("final-prompt").value;
+if(!finalPrompt.trim()){alert("请先复制提示词（点击使用此提示词生成按钮）");return;}
+btn.disabled=true;
+btn.textContent="AI思考中...";
+outputSection.style.display="block";
+outputContent.textContent="";
+outputContent.classList.remove("error");
+outputContent.innerHTML="<div class=\"loading\">AI正在生成题目...</div>";
+setTimeout(function(){
+var dim=document.getElementById("prompt-dimension").value;
+var dimName=dimensionNames[dim]||"综合能力";
+generatedContent="## 题目："+dimName+"实战考核\n\n### 任务背景\n假设你是一家互联网公司的后端工程师，公司正在快速扩张，技术团队需要处理越来越复杂的业务场景。你收到一个模块，需要在保证现有功能正常运行的前提下完成优化改造。\n\n### 具体要求\n1. 首先分析任务需求，明确验收标准\n2. 制定合理的实施方案\n3. 在不破坏现有系统稳定性的前提下完成任务\n4. 编写清晰的文档说明你的思路和权衡取舍\n5. 提供测试用例验证方案的正确性\n\n### 面试官提示词\n如果候选人卡住，可以给出以下提示：\n- 提示1：先从整体架构入手，理解数据流向和调用链路\n- 提示2：关注核心流程中的瓶颈和风险点\n- 提示3：从已知的最佳实践出发，结合实际情况调整\n\n### 评分标准\n- **优秀 (80-100分)**：方案完整合理，文档清晰，测试覆盖完整，有创新点\n- **良好 (60-79分)**：能完成主要目标，方案可行，有基本测试\n- **及格 (40-59分)**：基本完成，但细节考虑不足\n- **不及格 (0-39分)**：方案有明显漏洞，或无法完成基本要求\n\n### 预计完成时间\n"+levelTimeMap[selectedLevel];
+outputContent.textContent=generatedContent;
+btn.disabled=false;
+btn.textContent="生成题目";
+},1500);
+}
+
+function copyOutput(){
+navigator.clipboard.writeText(generatedContent).then(function(){alert("已复制到剪贴板！");});
+}
+
+function saveToQuestionBank(){
+var dim=document.getElementById("prompt-dimension").value;
+var dimName=dimensionNames[dim]||"综合能力";
+var title=generatedContent.match(/## 题目：(.+)/)?generatedContent.match(/## 题目：(.+)/)[1].trim():"AI生成题目";
+var grading=JSON.stringify({excellent:"方案完整合理，文档清晰，测试覆盖完整，有创新点",good:"能完成主要目标，方案可行，有基本测试",pass:"基本完成，但细节考虑不足",fail:"方案有明显漏洞，或无法完成基本要求"});
+var xhr=new XMLHttpRequest();
+xhr.open("POST","/api/questions",true);
+xhr.setRequestHeader("Content-Type","application/json");
+xhr.onreadystatechange=function(){
+if(xhr.readyState===4&&xhr.status===200){
+var data=JSON.parse(xhr.responseText);
+if(data.success){alert("题目已保存到题库！可以到题库管理页面查看");}
+}
+};
+xhr.send(JSON.stringify({dimension:dimName,level:selectedLevel,title:title,content:generatedContent,hints:"见题目中的面试官提示词部分",grading:grading,tags:"AI生成,"+dimName}));
+}
+
+init();
+</script>
+</body>
+</html>

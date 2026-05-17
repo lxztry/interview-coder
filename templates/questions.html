@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题库管理 - 面试出题系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0e0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav a { padding: 10px 20px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; color: #888; text-decoration: none; }
+        .nav a:hover, .nav a.active { color: #4a9eff; border-color: #4a9eff; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { font-size: 1.8em; color: #fff; }
+        .filters { display: flex; gap: 15px; margin-bottom: 20px; }
+        select, input, button { padding: 10px 15px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; color: #e0e0e0; }
+        select { cursor: pointer; }
+        button { background: #4a9eff; border: none; cursor: pointer; font-weight: 600; }
+        button:hover { background: #3a8eef; }
+        .btn-secondary { background: #2a2a4a; }
+        .btn-danger { background: #ff4a4a; }
+        .question-list { display: grid; gap: 15px; }
+        .question-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 20px; }
+        .question-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .question-title { font-size: 1.1em; color: #fff; font-weight: 600; }
+        .question-meta { display: flex; gap: 10px; margin-top: 10px; }
+        .tag { padding: 4px 12px; border-radius: 20px; font-size: 0.8em; }
+        .tag-dim { background: #2a4a6a; color: #4a9eff; }
+        .tag-level-l1 { background: #2a4a2a; color: #4aff4a; }
+        .tag-level-l2 { background: #4a3a2a; color: #ffaa4a; }
+        .tag-level-l3 { background: #4a2a2a; color: #ff4a4a; }
+        .question-actions { display: flex; gap: 10px; }
+        .question-actions button { padding: 6px 12px; font-size: 0.85em; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 16px; padding: 30px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { color: #fff; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #888; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; }
+        .form-group textarea { min-height: 150px; resize: vertical; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="/">首页</a>
+            <a href="/questions" class="active">题库管理</a>
+            <a href="/papers">试卷管理</a>
+            <a href="/candidates">候选人</a>
+            <a href="/ai-assist">AI助手</a>
+        </nav>
+        
+        <div class="header">
+            <h1>📚 题库管理</h1>
+            <button onclick="openModal('add')">+ 添加题目</button>
+        </div>
+        
+        <div class="filters">
+            <select id="filter-dimension" onchange="loadQuestions()">
+                <option value="">全部维度</option>
+                <option value="AI工具使用能力">AI工具使用能力</option>
+                <option value="代码理解与改写">代码理解与改写</option>
+                <option value="业务建模能力">业务建模能力</option>
+                <option value="调试与排查能力">调试与排查能力</option>
+            </select>
+            <select id="filter-level" onchange="loadQuestions()">
+                <option value="">全部难度</option>
+                <option value="L1">L1 入门级</option>
+                <option value="L2">L2 中级</option>
+                <option value="L3">L3 高级</option>
+            </select>
+        </div>
+        
+        <div id="question-list" class="question-list"></div>
+    </div>
+    
+    <!-- 添加/编辑题目 Modal -->
+    <div id="question-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">添加题目</h2>
+            <form id="question-form">
+                <input type="hidden" id="question-id">
+                <div class="form-group">
+                    <label>维度</label>
+                    <select id="q-dimension" required>
+                        <option value="AI工具使用能力">AI工具使用能力</option>
+                        <option value="代码理解与改写">代码理解与改写</option>
+                        <option value="业务建模能力">业务建模能力</option>
+                        <option value="调试与排查能力">调试与排查能力</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>难度</label>
+                    <select id="q-level" required>
+                        <option value="L1">L1 入门级</option>
+                        <option value="L2">L2 中级</option>
+                        <option value="L3">L3 高级</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" id="q-title" required placeholder="简洁描述题目考核内容">
+                </div>
+                <div class="form-group">
+                    <label>题目内容 (Markdown)</label>
+                    <textarea id="q-content" required placeholder="## 任务背景&#10;[描述场景]&#10;&#10;## 具体要求&#10;[验收标准]"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>面试官提示词 (可选)</label>
+                    <textarea id="q-hints" placeholder="候选人卡住时给的提示"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>评分标准 (JSON)</label>
+                    <textarea id="q-grading" required placeholder='{"excellent": "优秀标准...", "good": "良好标准...", "pass": "及格标准...", "fail": "不及格标准..."}'></textarea>
+                </div>
+                <div class="form-group">
+                    <label>标签 (逗号分隔)</label>
+                    <input type="text" id="q-tags" placeholder="如: 多线程, Redis, 高并发">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        
+        async function loadQuestions() {
+            const dim = document.getElementById('filter-dimension').value;
+            const level = document.getElementById('filter-level').value;
+            let url = '/api/questions';
+            const params = [];
+            if (dim) params.push(`dimension=${dim}`);
+            if (level) params.push(`level=${level}`);
+            if (params.length) url += '?' + params.join('&');
+            
+            const res = await fetch(url);
+            questions = await res.json();
+            renderQuestions();
+        }
+        
+        function renderQuestions() {
+            const list = document.getElementById('question-list');
+            if (!questions.length) {
+                list.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">暂无题目，请添加</p>';
+                return;
+            }
+            list.innerHTML = questions.map(q => `
+                <div class="question-card">
+                    <div class="question-header">
+                        <div class="question-title">${escapeHtml(q.title)}</div>
+                        <div class="question-actions">
+                            <button class="btn-secondary" onclick="editQuestion(${q.id})">编辑</button>
+                            <button class="btn-danger" onclick="deleteQuestion(${q.id})">删除</button>
+                        </div>
+                    </div>
+                    <p style="color:#888;margin:10px 0;">${escapeHtml(q.content).substring(0, 200)}...</p>
+                    <div class="question-meta">
+                        <span class="tag tag-dim">${q.dimension}</span>
+                        <span class="tag tag-level-${q.level.toLowerCase()}">${q.level}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function openModal(mode, q = null) {
+            document.getElementById('question-modal').classList.add('active');
+            document.getElementById('modal-title').textContent = mode === 'add' ? '添加题目' : '编辑题目';
+            if (q) {
+                document.getElementById('question-id').value = q.id;
+                document.getElementById('q-dimension').value = q.dimension;
+                document.getElementById('q-level').value = q.level;
+                document.getElementById('q-title').value = q.title;
+                document.getElementById('q-content').value = q.content;
+                document.getElementById('q-hints').value = q.hints || '';
+                document.getElementById('q-grading').value = typeof q.grading === 'string' ? q.grading : JSON.stringify(q.grading);
+                document.getElementById('q-tags').value = q.tags || '';
+            } else {
+                document.getElementById('question-form').reset();
+                document.getElementById('question-id').value = '';
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('question-modal').classList.remove('active');
+        }
+        
+        async function editQuestion(id) {
+            const res = await fetch(`/api/questions/${id}`);
+            const q = await res.json();
+            openModal('edit', q);
+        }
+        
+        async function deleteQuestion(id) {
+            if (!confirm('确定删除这道题目？')) return;
+            await fetch(`/api/questions/${id}`, { method: 'DELETE' });
+            loadQuestions();
+        }
+        
+        document.getElementById('question-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('question-id').value;
+            const data = {
+                dimension: document.getElementById('q-dimension').value,
+                level: document.getElementById('q-level').value,
+                title: document.getElementById('q-title').value,
+                content: document.getElementById('q-content').value,
+                hints: document.getElementById('q-hints').value,
+                grading: document.getElementById('q-grading').value,
+                tags: document.getElementById('q-tags').value
+            };
+            
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/questions/${id}` : '/api/questions';
+            await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            closeModal();
+            loadQuestions();
+        };
+        
+        loadQuestions();
+    </script>
+</body>
+</html>

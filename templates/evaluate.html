@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评分工作台 - 面试出题系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0e0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav a { padding: 10px 20px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; color: #888; text-decoration: none; }
+        .nav a:hover { color: #4a9eff; border-color: #4a9eff; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { font-size: 1.8em; color: #fff; }
+        h2 { font-size: 1.3em; color: #fff; margin-bottom: 15px; }
+        .candidate-info { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 20px; margin-bottom: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .info-item label { color: #888; font-size: 0.85em; display: block; margin-bottom: 5px; }
+        .info-item span { color: #fff; font-weight: 600; }
+        .question-section { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        .question-title { font-size: 1.1em; color: #fff; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .question-content { background: #0f0f1a; border-radius: 8px; padding: 15px; margin: 15px 0; white-space: pre-wrap; font-size: 0.95em; line-height: 1.7; }
+        .answer-section { margin-top: 20px; }
+        .answer-label { color: #888; font-size: 0.9em; margin-bottom: 10px; }
+        .answer-input { width: 100%; min-height: 200px; background: #0f0f1a; border: 1px solid #2a2a4a; border-radius: 8px; padding: 15px; color: #e0e0e0; font-family: monospace; font-size: 0.95em; resize: vertical; }
+        .grading-section { margin-top: 20px; }
+        .grading-row { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+        .grading-row label { color: #888; min-width: 80px; }
+        .grading-row input[type="range"] { flex: 1; }
+        .grading-row span { min-width: 50px; text-align: right; color: #4a9eff; font-weight: 600; }
+        .comment-input { width: 100%; min-height: 80px; background: #0f0f1a; border: 1px solid #2a2a4a; border-radius: 8px; padding: 10px; color: #e0e0e0; resize: vertical; }
+        .actions { display: flex; gap: 10px; margin-top: 30px; justify-content: flex-end; }
+        button { padding: 10px 20px; background: #4a9eff; border: none; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600; }
+        button:hover { background: #3a8eef; }
+        .btn-secondary { background: #2a2a4a; }
+        .btn-success { background: #4aff4a; color: #000; }
+        .ai-hint { background: linear-gradient(135deg, #1a2a4a, #2a1a4a); border: 1px solid #4a4aff; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .ai-hint-title { color: #8888ff; font-size: 0.85em; margin-bottom: 8px; }
+        .ai-hint-content { color: #aaa; font-size: 0.9em; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="/">← 首页</a>
+            <a href="/candidates">← 候选人</a>
+        </nav>
+        
+        <div class="header">
+            <h1>📊 评分工作台</h1>
+        </div>
+        
+        <div id="candidate-info" class="candidate-info"></div>
+        
+        <div id="questions-container"></div>
+        
+        <div class="actions">
+            <button class="btn-success" onclick="saveAllScores()">💾 保存评分</button>
+        </div>
+    </div>
+
+    <script>
+        const candidateId = window.location.pathname.split('/').pop();
+        let candidate = {};
+        let paper = {};
+        let questions = [];
+        let scores = {};
+        
+        async function loadData() {
+            const [cRes, papersRes] = await Promise.all([
+                fetch(`/api/candidates/${candidateId}`),
+                fetch('/api/papers')
+            ]);
+            candidate = await cRes.json();
+            papers = await papersRes.json();
+            
+            if (candidate.paper_id) {
+                const pRes = await fetch(`/api/papers/${candidate.paper_id}`);
+                paper = await pRes.json();
+                questions = paper.questions || [];
+            }
+            
+            renderCandidateInfo();
+            renderQuestions();
+        }
+        
+        function renderCandidateInfo() {
+            const statusMap = { pending: '待开始', doing: '进行中', done: '已完成' };
+            document.getElementById('candidate-info').innerHTML = `
+                <div class="info-item"><label>姓名</label><span>${escapeHtml(candidate.name)}</span></div>
+                <div class="info-item"><label>应聘职位</label><span>${escapeHtml(candidate.position)}</span></div>
+                <div class="info-item"><label>试卷</label><span>${paper.name || '未分配'}</span></div>
+                <div class="info-item"><label>状态</label><span>${statusMap[candidate.status] || '未知'}</span></div>
+            `;
+        }
+        
+        function renderQuestions() {
+            if (!questions.length) {
+                document.getElementById('questions-container').innerHTML = '<p style="color:#888;text-align:center;padding:40px;">暂无题目</p>';
+                return;
+            }
+            document.getElementById('questions-container').innerHTML = questions.map((q, idx) => `
+                <div class="question-section">
+                    <div class="question-title">
+                        <span>第${idx + 1}题：${escapeHtml(q.title)}</span>
+                        <span style="font-size:0.8em;color:#888;">${q.dimension} · ${q.level}</span>
+                    </div>
+                    <div class="question-content">${escapeHtml(q.content)}</div>
+                    ${q.hints ? `<div style="color:#888;font-size:0.85em;margin-top:10px;">💡 提示：${escapeHtml(q.hints)}</div>` : ''}
+                    
+                    <div class="grading-section">
+                        <h3 style="color:#888;font-size:0.9em;margin-bottom:15px;">评分</h3>
+                        <div class="grading-row">
+                            <label>得分</label>
+                            <input type="range" min="0" max="100" value="${scores[q.id]?.score || 70}" 
+                                   onchange="updateScore(${q.id}, this.value)">
+                            <span id="score-${q.id}">${scores[q.id]?.score || 70}</span>
+                        </div>
+                        <div style="margin-top:10px;">
+                            <label style="color:#888;font-size:0.85em;display:block;margin-bottom:5px;">评语</label>
+                            <textarea class="comment-input" id="comment-${q.id}" 
+                                      placeholder="写下你的评语...">${scores[q.id]?.comment || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateScore(qId, value) {
+            scores[qId] = { score: parseInt(value), comment: document.getElementById(`comment-${qId}`)?.value || '' };
+            document.getElementById(`score-${qId}`).textContent = value;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+        
+        async function saveAllScores() {
+            // 收集所有评分
+            const finalScores = {};
+            questions.forEach(q => {
+                finalScores[q.id] = {
+                    score: parseInt(document.querySelector(`#score-${q.id}`)?.textContent || 70),
+                    comment: document.getElementById(`comment-${q.id}`)?.value || ''
+                };
+            });
+            
+            await fetch(`/api/candidates/${candidateId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scores: JSON.stringify(finalScores),
+                    status: 'done'
+                })
+            });
+            alert('评分已保存！');
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试出题系统 - AI时代研发招聘</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 40px 0; border-bottom: 1px solid #2a2a4a; margin-bottom: 40px; }
+        h1 { font-size: 2.2em; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: #888; font-size: 1.1em; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 30px; text-decoration: none; transition: all 0.3s; display: block; }
+        .card:hover { transform: translateY(-5px); border-color: #4a9eff; box-shadow: 0 10px 30px rgba(74, 158, 255, 0.2); }
+        .card-icon { font-size: 3em; margin-bottom: 15px; }
+        .card h2 { color: #fff; font-size: 1.3em; margin-bottom: 10px; }
+        .card p { color: #888; line-height: 1.6; }
+        .card .arrow { color: #4a9eff; margin-top: 15px; display: block; }
+        .features { margin-top: 50px; padding: 30px; background: #1a1a2e; border-radius: 16px; border: 1px solid #2a2a4a; }
+        .features h3 { color: #fff; margin-bottom: 20px; font-size: 1.2em; }
+        .feature-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .feature-item { display: flex; align-items: center; gap: 10px; color: #aaa; }
+        .feature-item .icon { font-size: 1.2em; }
+        .tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; background: #2a4a6a; color: #4a9eff; margin: 3px; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav a { padding: 10px 20px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; color: #888; text-decoration: none; transition: all 0.2s; }
+        .nav a:hover { color: #4a9eff; border-color: #4a9eff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="/">首页</a>
+            <a href="/questions">题库管理</a>
+            <a href="/papers">试卷管理</a>
+            <a href="/candidates">候选人</a>
+            <a href="/ai-assist">AI助手</a>
+        </nav>
+        
+        <header>
+            <h1>🤖 AI时代研发招聘出题系统</h1>
+            <p class="subtitle">帮面试官高效出题、管理题库、AI辅助评分</p>
+        </header>
+        
+        <div class="grid">
+            <a href="/questions" class="card">
+                <div class="card-icon">📚</div>
+                <h2>题库管理</h2>
+                <p>按维度/难度浏览、添加、编辑、搜索题目，支持Markdown格式</p>
+                <span class="arrow">→ 进入题库</span>
+            </a>
+            
+            <a href="/papers" class="card">
+                <div class="card-icon">📋</div>
+                <h2>试卷管理</h2>
+                <p>从题库选题组装试卷，预览、导出、发送给候选人</p>
+                <span class="arrow">→ 管理试卷</span>
+            </a>
+            
+            <a href="/candidates" class="card">
+                <div class="card-icon">👥</div>
+                <h2>候选人</h2>
+                <p>管理候选人信息，跟踪进度，查看提交答案</p>
+                <span class="arrow">→ 管理候选人</span>
+            </a>
+            
+            <a href="/ai-assist" class="card">
+                <div class="card-icon">✨</div>
+                <h2>AI助手</h2>
+                <p>接入DeepSeek/Gemini等AI，智能生成题目建议，自动更新题库</p>
+                <span class="arrow">→ 使用AI辅助</span>
+            </a>
+        </div>
+        
+        <div class="features">
+            <h3>🎯 考察维度</h3>
+            <div>
+                <span class="tag">AI工具使用能力</span>
+                <span class="tag">代码理解与改写</span>
+                <span class="tag">业务建模能力</span>
+                <span class="tag">调试与排查能力</span>
+            </div>
+            <h3 style="margin-top: 25px;">📊 难度级别</h3>
+            <div>
+                <span class="tag" style="background:#2a4a2a;color:#4aff4a;">L1 入门级</span>
+                <span class="tag" style="background:#4a3a2a;color:#ffaa4a;">L2 中级</span>
+                <span class="tag" style="background:#4a2a2a;color:#ff4a4a;">L3 高级</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
